@@ -1,4 +1,4 @@
-import React, { useState, Fragment } from 'react';
+import React, { useState, Fragment, useEffect } from 'react';
 import './App.css';
 
 const months = [
@@ -185,13 +185,13 @@ function App() {
       console.log('API Success Response:', data);
       setApiResponse(data);
       setCurrentBundleIndex(0); // Reset carousel to first bundle
-      setCurrentStep(10); // Go to results page
+      setCurrentStep(9); // Go to results page
     } catch (error) {
       console.error('Error calling API:', error);
       setApiResponse({ 
         error: `Failed to get gift recommendations: ${error.message}. Please try again.` 
       });
-      setCurrentStep(10);
+      setCurrentStep(9);
     } finally {
       setIsLoading(false);
     }
@@ -216,6 +216,7 @@ function App() {
           <button className="next-btn" onClick={nextStep}>
             Let's Start!
           </button>
+          <img src="/mascot.svg" alt="Gifty Mascot" className="paper-mascot" />
         </div>
       )}
 
@@ -223,6 +224,7 @@ function App() {
       {currentStep === 1 && (
         <div className="paper-overlay step-1">
           <button className="back-btn" onClick={prevStep}>← Back</button>
+          <img src="/who.svg" alt="Who" className="who-icon" />
           <div className="question">Who is it for?</div>
           <div className="input-group">
             <input
@@ -246,6 +248,7 @@ function App() {
       {currentStep === 2 && (
         <div className="paper-overlay step-2">
           <button className="back-btn" onClick={prevStep}>← Back</button>
+          <img src="/take_pics.svg" alt="Take Pictures" className="take-pics-icon" />
           <div className="question">Please add one or more outfit image that best describes the style</div>
           
           <div className="image-upload-section">
@@ -384,6 +387,7 @@ function App() {
       {currentStep === 6 && (
         <div className="paper-overlay step-6">
           <button className="back-btn" onClick={prevStep}>← Back</button>
+          <img src="/occasion.svg" alt="Occasion" className="occasion-icon" />
           <div className="question">Tell me about them?</div>
           <div className="input-group">
             <label>Occasion:</label>
@@ -404,33 +408,9 @@ function App() {
         </div>
       )}
 
-      {/* Step 7: Picture selection */}
+      {/* Step 7: Budget */}
       {currentStep === 7 && (
         <div className="paper-overlay step-7">
-          <button className="back-btn" onClick={prevStep}>← Back</button>
-          <div className="question">Which picture(s) reminds you of them?</div>
-          <div className="image-grid">
-            {[0, 1, 2, 3].map(index => (
-              <div
-                key={index}
-                className={`image-placeholder ${formData.selectedImages.includes(index) ? 'selected' : ''}`}
-                onClick={() => toggleImageSelection(index)}
-              />
-            ))}
-          </div>
-          <button 
-            className="next-btn" 
-            onClick={nextStep}
-            disabled={formData.selectedImages.length === 0}
-          >
-            Next
-          </button>
-        </div>
-      )}
-
-      {/* Step 8: Budget */}
-      {currentStep === 8 && (
-        <div className="paper-overlay step-8">
           <button className="back-btn" onClick={prevStep}>← Back</button>
           <div className="question">What's your budget?</div>
           <div className="input-group">
@@ -452,9 +432,9 @@ function App() {
         </div>
       )}
 
-      {/* Step 9: Ready to find gifts */}
-      {currentStep === 9 && (
-        <div className="paper-overlay step-9">
+      {/* Step 8: Ready to find gifts */}
+      {currentStep === 8 && (
+        <div className="paper-overlay step-8">
           <button className="back-btn" onClick={prevStep}>← Back</button>
           <div className="final-message">
             <h2>It seems like we are ready.</h2>
@@ -470,22 +450,19 @@ function App() {
         </div>
       )}
 
-      {/* Step 10: Results from API */}
-      {currentStep === 10 && (
-        <div className="paper-overlay step-10">
+      {/* Step 9: Results from API */}
+      {currentStep === 9 && (
+        <div className="paper-overlay step-9">
           <div className="results-page">
             {isLoading ? (
-              <div className="loading">
-                <div className="spinner"></div>
-                <p>Finding the perfect gifts for {formData.recipient}...</p>
-              </div>
+              <WalkingLoader recipient={formData.recipient} />
             ) : apiResponse ? (
               <div className="gift-results">
                 <h2>Perfect Gifts for {formData.recipient}!</h2>
                 {apiResponse.error ? (
                   <div className="error-message">
                     <p>{apiResponse.error}</p>
-                    <button className="next-btn" onClick={() => setCurrentStep(8)}>
+                    <button className="next-btn" onClick={() => setCurrentStep(7)}>
                       Try Again
                     </button>
                   </div>
@@ -746,7 +723,7 @@ function BoxAnimation({ bundle, animationFrame, outfitImages, onClose }) {
               <div className="cards-sliding-container">
                 {/* Reference Card */}
                 {outfitImages.length > 0 && (
-                  <div className="gift-card reference-card sliding-card">
+                  <div className="sliding-card reference-card">
                     <img src={outfitImages[0].preview} alt="Style Reference" />
                     <div className="card-label">Reference</div>
                   </div>
@@ -754,7 +731,7 @@ function BoxAnimation({ bundle, animationFrame, outfitImages, onClose }) {
                 
                 {/* Bundle Item Cards */}
                 {bundle.items && bundle.items.map((item, index) => (
-                  <div key={index} className={`gift-card item-card sliding-card card-${index + 1}`}>
+                  <div key={index} className={`sliding-card card-${index + 1}`}>
                     {item.image_url && (
                       <img src={item.image_url} alt={item.product_name} />
                     )}
@@ -765,7 +742,7 @@ function BoxAnimation({ bundle, animationFrame, outfitImages, onClose }) {
               </div>
               
               {/* Keep using frame2.svg for the opened box */}
-              <img src="/frame2.svg" alt="Opened Gift Box" className="frame-svg frame-svg-overlay" />
+              <img src="/frame2.svg" alt="Opened Gift Box" className="frame-svg frame-sme-svg-top" />
             </div>
             
             <div className="bundle-summary">
@@ -782,6 +759,29 @@ function BoxAnimation({ bundle, animationFrame, outfitImages, onClose }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function WalkingLoader({ recipient }) {
+  const [walkFrame, setWalkFrame] = useState(1);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setWalkFrame(prev => (prev % 3) + 1);
+    }, 300); // Change frame every 300ms
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="walking-loader">
+      <img 
+        src={`/walk${walkFrame}.svg`} 
+        alt="Walking" 
+        className="walk-animation" 
+      />
+      <p>Finding the perfect gifts for {recipient}...</p>
     </div>
   );
 }
