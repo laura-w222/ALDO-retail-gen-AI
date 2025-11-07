@@ -14,6 +14,7 @@ function App() {
   const [selectedBundle, setSelectedBundle] = useState(null);
   const [showBoxAnimation, setShowBoxAnimation] = useState(false);
   const [animationFrame, setAnimationFrame] = useState(1);
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [formData, setFormData] = useState({
     recipient: '',
     outfitImages: [],
@@ -141,6 +142,7 @@ function App() {
 
   const submitToAPI = async () => {
     setIsLoading(true);
+    setCurrentStep(9); // Go to results page immediately to show loading animation
     try {
       // Parse budget to extract numeric value
       const parseBudget = (budgetStr) => {
@@ -185,13 +187,11 @@ function App() {
       console.log('API Success Response:', data);
       setApiResponse(data);
       setCurrentBundleIndex(0); // Reset carousel to first bundle
-      setCurrentStep(9); // Go to results page
     } catch (error) {
       console.error('Error calling API:', error);
       setApiResponse({ 
         error: `Failed to get gift recommendations: ${error.message}. Please try again.` 
       });
-      setCurrentStep(9);
     } finally {
       setIsLoading(false);
     }
@@ -510,6 +510,15 @@ function App() {
                                     </div>
                                   </div>
 
+                                  <div className="bundle-feedback">
+                                    <button className="feedback-btn thumbs-up" title="I like this bundle">
+                                      👍
+                                    </button>
+                                    <button className="feedback-btn thumbs-down" title="Not for me">
+                                      👎
+                                    </button>
+                                  </div>
+
                                   <div className="bundle-items-horizontal">
                                     {bundle.items && bundle.items.map((item, itemIndex) => {
                                       const getCategoryIcon = (category) => {
@@ -586,6 +595,12 @@ function App() {
                                       onClick={() => selectBundle(bundle)}
                                     >
                                       Select This Bundle 🎁
+                                    </button>
+                                    <button 
+                                      className="feedback-link-btn"
+                                      onClick={() => setShowFeedbackForm(true)}
+                                    >
+                                      📝 Share your feedback
                                     </button>
                                   </div>
                                 </div>
@@ -675,6 +690,167 @@ function App() {
           }}
         />
       )}
+
+      {/* Feedback Form Overlay */}
+      {showFeedbackForm && (
+        <FeedbackForm onClose={() => setShowFeedbackForm(false)} />
+      )}
+    </div>
+  );
+}
+
+function FeedbackForm({ onClose }) {
+  const [feedback, setFeedback] = useState({
+    q1_satisfaction: '',
+    q2_relevance: '',
+    q3_ease: '',
+    q4_appeal: '',
+    q5_understanding: '',
+    q6_suggestions: ''
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log('Feedback submitted:', feedback);
+    // Here you can add API call to save feedback
+    alert('Thank you for your feedback!');
+    onClose();
+  };
+
+  const updateFeedback = (field, value) => {
+    setFeedback(prev => ({ ...prev, [field]: value }));
+  };
+
+  return (
+    <div className="feedback-overlay">
+      <div className="feedback-container">
+        <button className="close-feedback-btn" onClick={onClose}>×</button>
+        <h2>We'd love your feedback!</h2>
+        <p className="feedback-subtitle">Help us improve your gift-finding experience</p>
+        
+        <form onSubmit={handleSubmit} className="feedback-form">
+          {/* Q1: Overall Experience */}
+          <div className="form-group">
+            <label className="question-label">Q1. Overall Experience</label>
+            <p className="question-text">How satisfied are you with your overall experience using the AI Bundle Assistant?</p>
+            <div className="radio-group">
+              {['Very Satisfied', 'Satisfied', 'Neutral', 'Unsatisfied', 'Very Unsatisfied'].map(option => (
+                <label key={option} className="radio-option">
+                  <input
+                    type="radio"
+                    name="q1"
+                    value={option}
+                    checked={feedback.q1_satisfaction === option}
+                    onChange={(e) => updateFeedback('q1_satisfaction', e.target.value)}
+                  />
+                  <span>{option}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Q2: Bundle Relevance */}
+          <div className="form-group">
+            <label className="question-label">Q2. Bundle Relevance</label>
+            <p className="question-text">How well did the recommended bundle match your preferences?</p>
+            <div className="radio-group">
+              {['Perfectly matched', 'Mostly matched', 'Somewhat matched', 'Barely matched', 'Not matched at all'].map(option => (
+                <label key={option} className="radio-option">
+                  <input
+                    type="radio"
+                    name="q2"
+                    value={option}
+                    checked={feedback.q2_relevance === option}
+                    onChange={(e) => updateFeedback('q2_relevance', e.target.value)}
+                  />
+                  <span>{option}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Q3: Ease of Use */}
+          <div className="form-group">
+            <label className="question-label">Q3. Ease of Use</label>
+            <p className="question-text">How easy was it to use the AI Assistant to build or select your bundle?</p>
+            <div className="radio-group">
+              {['Very Easy', 'Easy', 'Neutral', 'Difficult', 'Very Difficult'].map(option => (
+                <label key={option} className="radio-option">
+                  <input
+                    type="radio"
+                    name="q3"
+                    value={option}
+                    checked={feedback.q3_ease === option}
+                    onChange={(e) => updateFeedback('q3_ease', e.target.value)}
+                  />
+                  <span>{option}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Q4: Bundle Appeal */}
+          <div className="form-group">
+            <label className="question-label">Q4. Bundle Appeal</label>
+            <p className="question-text">How appealing were the items and overall presentation of the bundle?</p>
+            <div className="radio-group">
+              {['Extremely appealing', 'Quite appealing', 'Somewhat appealing', 'Slightly appealing', 'Not appealing'].map(option => (
+                <label key={option} className="radio-option">
+                  <input
+                    type="radio"
+                    name="q4"
+                    value={option}
+                    checked={feedback.q4_appeal === option}
+                    onChange={(e) => updateFeedback('q4_appeal', e.target.value)}
+                  />
+                  <span>{option}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Q5: AI Understanding */}
+          <div className="form-group">
+            <label className="question-label">Q5. AI Understanding</label>
+            <p className="question-text">Do you feel the AI understood your preferences accurately?</p>
+            <div className="radio-group">
+              {['Yes, completely', 'Mostly', 'Partially', 'Not really', 'Not at all'].map(option => (
+                <label key={option} className="radio-option">
+                  <input
+                    type="radio"
+                    name="q5"
+                    value={option}
+                    checked={feedback.q5_understanding === option}
+                    onChange={(e) => updateFeedback('q5_understanding', e.target.value)}
+                  />
+                  <span>{option}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Q6: Suggestions */}
+          <div className="form-group">
+            <label className="question-label">Q6. Suggestions for Improvement</label>
+            <p className="question-text">What would make your experience better?</p>
+            <textarea
+              value={feedback.q6_suggestions}
+              onChange={(e) => updateFeedback('q6_suggestions', e.target.value)}
+              placeholder="Share your thoughts..."
+              rows="4"
+            />
+          </div>
+
+          <div className="form-actions">
+            <button type="submit" className="submit-feedback-btn">
+              Submit Feedback
+            </button>
+            <button type="button" className="cancel-btn" onClick={onClose}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
