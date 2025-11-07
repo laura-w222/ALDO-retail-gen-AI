@@ -1,0 +1,697 @@
+import React, { useState, Fragment } from 'react';
+import './App.css';
+
+const months = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
+function App() {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiResponse, setApiResponse] = useState(null);
+  const [currentBundleIndex, setCurrentBundleIndex] = useState(0);
+  const [formData, setFormData] = useState({
+    recipient: '',
+    outfitImages: [],
+    age: 18,
+    gender: '',
+    occasion: '',
+    month: '',
+    selectedImages: [],
+    budget: ''
+  });
+
+  const updateFormData = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const nextStep = () => {
+    if (currentStep < 9) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const toggleImageSelection = (index) => {
+    const newSelection = formData.selectedImages.includes(index)
+      ? formData.selectedImages.filter(i => i !== index)
+      : [...formData.selectedImages, index];
+    updateFormData('selectedImages', newSelection);
+  };
+
+  const handleImageUpload = (event) => {
+    const files = Array.from(event.target.files);
+    const newImages = [...formData.outfitImages];
+    
+    files.forEach(file => {
+      if (file.type.startsWith('image/')) {
+        // Compress image before adding
+        compressImage(file, (compressedDataUrl) => {
+          newImages.push({
+            file: file,
+            preview: compressedDataUrl,
+            name: file.name
+          });
+          updateFormData('outfitImages', [...newImages]);
+        });
+      }
+    });
+  };
+
+  const compressImage = (file, callback) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = () => {
+      // Set max dimensions
+      const maxWidth = 800;
+      const maxHeight = 600;
+      
+      let { width, height } = img;
+      
+      // Calculate new dimensions
+      if (width > height) {
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+      } else {
+        if (height > maxHeight) {
+          width = (width * maxHeight) / height;
+          height = maxHeight;
+        }
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Draw and compress
+      ctx.drawImage(img, 0, 0, width, height);
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
+      callback(compressedDataUrl);
+    };
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = (index) => {
+    const newImages = formData.outfitImages.filter((_, i) => i !== index);
+    updateFormData('outfitImages', newImages);
+  };
+
+  const nextBundle = () => {
+    if (apiResponse && apiResponse.bundles) {
+      setCurrentBundleIndex((prev) => 
+        prev < apiResponse.bundles.length - 1 ? prev + 1 : 0
+      );
+    }
+  };
+
+  const prevBundle = () => {
+    if (apiResponse && apiResponse.bundles) {
+      setCurrentBundleIndex((prev) => 
+        prev > 0 ? prev - 1 : apiResponse.bundles.length - 1
+      );
+    }
+  };
+
+  const submitToAPI = async () => {
+    setIsLoading(true);
+    try {
+      // Parse budget to extract numeric value
+      const parseBudget = (budgetStr) => {
+        if (!budgetStr) return 0;
+        // Remove currency symbols and non-numeric characters, keep only numbers and decimal points
+        const numericStr = budgetStr.replace(/[^0-9.]/g, '');
+        const parsed = parseFloat(numericStr);
+        return isNaN(parsed) ? 0 : parsed;
+      };
+
+      // Prepare the payload
+      const payload = {
+        recipient: formData.recipient,
+        images: formData.outfitImages.map(img => img.preview), // Send as array of base64 strings
+        age: formData.age,
+        gender: formData.gender,
+        occasion: formData.occasion,
+        month: formData.month,
+        selectedImages: formData.selectedImages,
+        budget: parseBudget(formData.budget) // Convert to number
+      };
+
+      console.log('Sending payload:', { ...payload, images: `[${payload.images.length} images]` });
+
+      const response = await fetch('https://cjrw1dwlx2.execute-api.us-east-1.amazonaws.com/prod/outfit-bundles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`API returned ${response.status}: ${errorText}`);
+      }
+      
+      const data = await response.json();
+      console.log('API Success Response:', data);
+      setApiResponse(data);
+      setCurrentBundleIndex(0); // Reset carousel to first bundle
+      setCurrentStep(10); // Go to results page
+    } catch (error) {
+      console.error('Error calling API:', error);
+      setApiResponse({ 
+        error: `Failed to get gift recommendations: ${error.message}. Please try again.` 
+      });
+      setCurrentStep(10);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="app">
+      <div className="page active">
+        <div className="logo">ALDO</div>
+        <div className="mascot">🎁</div>
+      </div>
+
+      {/* Step 0: Welcome */}
+      {currentStep === 0 && (
+        <div className="paper-overlay step-0">
+          <div className="question">
+            So you want to buy a gift?
+            <br />
+            <br />
+            I'm Gifty and let's buy a gift together!
+          </div>
+          <button className="next-btn" onClick={nextStep}>
+            Let's Start!
+          </button>
+        </div>
+      )}
+
+      {/* Step 1: Who is it for? */}
+      {currentStep === 1 && (
+        <div className="paper-overlay step-1">
+          <button className="back-btn" onClick={prevStep}>← Back</button>
+          <div className="question">Who is it for?</div>
+          <div className="input-group">
+            <input
+              type="text"
+              placeholder="Enter name..."
+              value={formData.recipient}
+              onChange={(e) => updateFormData('recipient', e.target.value)}
+            />
+          </div>
+          <button 
+            className="next-btn" 
+            onClick={nextStep}
+            disabled={!formData.recipient.trim()}
+          >
+            Next
+          </button>
+        </div>
+      )}
+
+      {/* Step 2: Outfit Image Upload */}
+      {currentStep === 2 && (
+        <div className="paper-overlay step-2">
+          <button className="back-btn" onClick={prevStep}>← Back</button>
+          <div className="question">Please add one or more outfit image that best describes the style</div>
+          
+          <div className="image-upload-section">
+            <div className="upload-area">
+              <input
+                type="file"
+                id="outfit-upload"
+                multiple
+                accept="image/*"
+                onChange={handleImageUpload}
+                style={{ display: 'none' }}
+              />
+              <label htmlFor="outfit-upload" className="upload-label">
+                <div className="upload-icon">📷</div>
+                <div className="upload-text">
+                  Click to upload outfit images
+                  <br />
+                  <small>You can select multiple images</small>
+                </div>
+              </label>
+            </div>
+            
+            {formData.outfitImages.length > 0 && (
+              <div className="uploaded-images">
+                {formData.outfitImages.map((image, index) => (
+                  <div key={index} className="uploaded-image">
+                    <img src={image.preview} alt={`Outfit ${index + 1}`} />
+                    <button 
+                      className="remove-image-btn"
+                      onClick={() => removeImage(index)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          <button 
+            className="next-btn" 
+            onClick={nextStep}
+            disabled={formData.outfitImages.length === 0}
+          >
+            Next
+          </button>
+        </div>
+      )}
+
+      {/* Step 3: Age */}
+      {currentStep === 3 && (
+        <div className="paper-overlay step-3">
+          <button className="back-btn" onClick={prevStep}>← Back</button>
+          <div className="question">Tell me about them?</div>
+          <div className="age-slider">
+            <label>Age:</label>
+            <input
+              type="range"
+              min="1"
+              max="100"
+              value={formData.age}
+              onChange={(e) => updateFormData('age', parseInt(e.target.value))}
+            />
+            <div className="age-value">{formData.age}</div>
+          </div>
+          <button className="next-btn" onClick={nextStep}>
+            Next
+          </button>
+        </div>
+      )}
+
+      {/* Step 4: Gender */}
+      {currentStep === 4 && (
+        <div className="paper-overlay step-4">
+          <button className="back-btn" onClick={prevStep}>← Back</button>
+          <div className="question">Tell me about them?</div>
+          <div className="options">
+            <button
+              className={`option-btn ${formData.gender === 'M' ? 'selected' : ''}`}
+              onClick={() => updateFormData('gender', 'M')}
+            >
+              M
+            </button>
+            <button
+              className={`option-btn ${formData.gender === 'F' ? 'selected' : ''}`}
+              onClick={() => updateFormData('gender', 'F')}
+            >
+              F
+            </button>
+            <button
+              className={`option-btn ${formData.gender === 'Other' ? 'selected' : ''}`}
+              onClick={() => updateFormData('gender', 'Other')}
+            >
+              Other
+            </button>
+            <button
+              className={`option-btn ${formData.gender === 'Prefer not to say' ? 'selected' : ''}`}
+              onClick={() => updateFormData('gender', 'Prefer not to say')}
+            >
+              Prefer not to say
+            </button>
+          </div>
+          <button 
+            className="next-btn" 
+            onClick={nextStep}
+            disabled={!formData.gender}
+          >
+            Next
+          </button>
+        </div>
+      )}
+
+      {/* Step 5: When is the gift for? */}
+      {currentStep === 5 && (
+        <div className="paper-overlay step-5">
+          <button className="back-btn" onClick={prevStep}>← Back</button>
+          <div className="question">Tell me about them?</div>
+          <div className="input-group">
+            <label>When is the gift for?</label>
+            <MonthDropdown 
+              value={formData.month}
+              onChange={(month) => updateFormData('month', month)}
+            />
+          </div>
+          <button 
+            className="next-btn" 
+            onClick={nextStep}
+            disabled={!formData.month}
+          >
+            Next
+          </button>
+        </div>
+      )}
+
+      {/* Step 6: Occasion */}
+      {currentStep === 6 && (
+        <div className="paper-overlay step-6">
+          <button className="back-btn" onClick={prevStep}>← Back</button>
+          <div className="question">Tell me about them?</div>
+          <div className="input-group">
+            <label>Occasion:</label>
+            <input
+              type="text"
+              placeholder="Birthday, Anniversary, etc..."
+              value={formData.occasion}
+              onChange={(e) => updateFormData('occasion', e.target.value)}
+            />
+          </div>
+          <button 
+            className="next-btn" 
+            onClick={nextStep}
+            disabled={!formData.occasion.trim()}
+          >
+            Next
+          </button>
+        </div>
+      )}
+
+      {/* Step 7: Picture selection */}
+      {currentStep === 7 && (
+        <div className="paper-overlay step-7">
+          <button className="back-btn" onClick={prevStep}>← Back</button>
+          <div className="question">Which picture(s) reminds you of them?</div>
+          <div className="image-grid">
+            {[0, 1, 2, 3].map(index => (
+              <div
+                key={index}
+                className={`image-placeholder ${formData.selectedImages.includes(index) ? 'selected' : ''}`}
+                onClick={() => toggleImageSelection(index)}
+              />
+            ))}
+          </div>
+          <button 
+            className="next-btn" 
+            onClick={nextStep}
+            disabled={formData.selectedImages.length === 0}
+          >
+            Next
+          </button>
+        </div>
+      )}
+
+      {/* Step 8: Budget */}
+      {currentStep === 8 && (
+        <div className="paper-overlay step-8">
+          <button className="back-btn" onClick={prevStep}>← Back</button>
+          <div className="question">What's your budget?</div>
+          <div className="input-group">
+            <label>Enter budget:</label>
+            <input
+              type="text"
+              placeholder="$50, $100, etc..."
+              value={formData.budget}
+              onChange={(e) => updateFormData('budget', e.target.value)}
+            />
+          </div>
+          <button 
+            className="next-btn" 
+            onClick={nextStep}
+            disabled={!formData.budget.trim()}
+          >
+            Next
+          </button>
+        </div>
+      )}
+
+      {/* Step 9: Ready to find gifts */}
+      {currentStep === 9 && (
+        <div className="paper-overlay step-9">
+          <button className="back-btn" onClick={prevStep}>← Back</button>
+          <div className="final-message">
+            <h2>It seems like we are ready.</h2>
+            <p>Let's go find a gift!</p>
+            <button 
+              className="next-btn find-gifts-btn" 
+              onClick={submitToAPI}
+              disabled={isLoading}
+            >
+              {isLoading ? 'Finding Gifts...' : 'Find Gifts!'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 10: Results from API */}
+      {currentStep === 10 && (
+        <div className="paper-overlay step-10">
+          <div className="results-page">
+            {isLoading ? (
+              <div className="loading">
+                <div className="spinner"></div>
+                <p>Finding the perfect gifts for {formData.recipient}...</p>
+              </div>
+            ) : apiResponse ? (
+              <div className="gift-results">
+                <h2>Perfect Gifts for {formData.recipient}!</h2>
+                {apiResponse.error ? (
+                  <div className="error-message">
+                    <p>{apiResponse.error}</p>
+                    <button className="next-btn" onClick={() => setCurrentStep(8)}>
+                      Try Again
+                    </button>
+                  </div>
+                ) : (
+                  <div className="bundle-carousel-container">
+                    <div className="bundle-explanation">
+                      <h3>🎯 AI-Curated Gift Bundles</h3>
+                      <p>Our AI analyzed your style preferences and created these perfect shoe & handbag combinations for {formData.recipient}. Each bundle is carefully matched for style, occasion, and budget.</p>
+                    </div>
+
+                    {apiResponse.bundles && apiResponse.bundles.length > 0 && (
+                      <div className="bundle-carousel">
+                        <div className="carousel-header">
+                          <h3>Bundle {currentBundleIndex + 1} of {apiResponse.bundles.length}</h3>
+                          <div className="carousel-dots">
+                            {apiResponse.bundles.map((_, index) => (
+                              <button
+                                key={index}
+                                className={`dot ${index === currentBundleIndex ? 'active' : ''}`}
+                                onClick={() => setCurrentBundleIndex(index)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="carousel-content">
+                          <button 
+                            className="carousel-btn prev-btn" 
+                            onClick={prevBundle}
+                            disabled={apiResponse.bundles.length <= 1}
+                          >
+                            ‹
+                          </button>
+
+                          <div className="bundle-display">
+                            {(() => {
+                              const bundle = apiResponse.bundles[currentBundleIndex];
+                              return (
+                                <div className="bundle-card-horizontal">
+                                  <div className="bundle-header">
+                                    <h3>{bundle.bundle_name || `Bundle ${bundle.bundle_number}`}</h3>
+                                    <div className="bundle-meta">
+                                      <span className="bundle-type">{bundle.bundle_type}</span>
+                                      <span className="match-score">Match: {bundle.match_score}/10</span>
+                                    </div>
+                                  </div>
+
+                                  <div className="bundle-items-horizontal">
+                                    {bundle.items && bundle.items.map((item, itemIndex) => {
+                                      const getCategoryIcon = (category) => {
+                                        switch(category) {
+                                          case 'shoes': return '👠';
+                                          case 'handbag': return '👜';
+                                          case 'clothing': return '👔';
+                                          default: return '🎁';
+                                        }
+                                      };
+
+                                      const getCategoryLabel = (category) => {
+                                        switch(category) {
+                                          case 'shoes': return 'Shoes';
+                                          case 'handbag': return 'Handbag';
+                                          case 'clothing': return 'Clothing';
+                                          default: return 'Item';
+                                        }
+                                      };
+
+                                      return (
+                                        <Fragment key={itemIndex}>
+                                          <div className="bundle-item-horizontal">
+                                            <div className="item-header">
+                                              <h4>{getCategoryIcon(item.category)} {getCategoryLabel(item.category)}</h4>
+                                            </div>
+                                            {item.image_url && (
+                                              <img src={item.image_url} alt={item.product_name} className="item-image-large" />
+                                            )}
+                                            <div className="item-details">
+                                              <p className="item-name">{item.product_name}</p>
+                                              <p className="item-price">${item.price}</p>
+                                              {item.product_url && (
+                                                <a href={item.product_url} target="_blank" rel="noopener noreferrer" className="item-link">
+                                                  View {getCategoryLabel(item.category)}
+                                                </a>
+                                              )}
+                                              {item.reason && (
+                                                <div className="item-reason">
+                                                  <p><strong>Why this {item.category}:</strong> {item.reason}</p>
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
+                                          {itemIndex < bundle.items.length - 1 && (
+                                            <div className="bundle-connector">
+                                              <div className="connector-line"></div>
+                                              <div className="plus-icon">+</div>
+                                              <div className="connector-line"></div>
+                                            </div>
+                                          )}
+                                        </Fragment>
+                                      );
+                                    })}
+                                  </div>
+
+                                  {bundle.total_cost && (
+                                    <div className="bundle-total-horizontal">
+                                      <div className="total-label">Bundle Total</div>
+                                      <div className="total-price">${bundle.total_cost}</div>
+                                    </div>
+                                  )}
+
+                                  {bundle.styling_note && (
+                                    <div className="bundle-note">
+                                      <h5>✨ Styling Note</h5>
+                                      <p>{bundle.styling_note}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                          </div>
+
+                          <button 
+                            className="carousel-btn next-btn" 
+                            onClick={nextBundle}
+                            disabled={apiResponse.bundles.length <= 1}
+                          >
+                            ›
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {apiResponse.context && (
+                      <div className="context-info">
+                        <h4>📋 Your Preferences</h4>
+                        <div className="context-grid">
+                          <div className="context-item">
+                            <span className="context-label">Recipient:</span>
+                            <span className="context-value">{formData.recipient}</span>
+                          </div>
+                          <div className="context-item">
+                            <span className="context-label">Age:</span>
+                            <span className="context-value">{apiResponse.context.age}</span>
+                          </div>
+                          <div className="context-item">
+                            <span className="context-label">Gender:</span>
+                            <span className="context-value">{apiResponse.context.gender}</span>
+                          </div>
+                          <div className="context-item">
+                            <span className="context-label">Occasion:</span>
+                            <span className="context-value">{apiResponse.context.occasion}</span>
+                          </div>
+                          <div className="context-item">
+                            <span className="context-label">Budget:</span>
+                            <span className="context-value">${apiResponse.context.budget}</span>
+                          </div>
+                          <div className="context-item">
+                            <span className="context-label">Outfits Found:</span>
+                            <span className="context-value">{apiResponse.outfits_count}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <button className="next-btn" onClick={() => {
+                  setCurrentStep(0);
+                  setFormData({
+                    recipient: '',
+                    outfitImages: [],
+                    age: 18,
+                    gender: '',
+                    occasion: '',
+                    month: '',
+                    selectedImages: [],
+                    budget: ''
+                  });
+                  setApiResponse(null);
+                }}>
+                  Start Over
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MonthDropdown({ value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="dropdown">
+      <button 
+        className="dropdown-btn"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        {value || 'Month'}
+      </button>
+      {isOpen && (
+        <div className="dropdown-content">
+          {months.map(month => (
+            <div
+              key={month}
+              className="dropdown-item"
+              onClick={() => {
+                onChange(month);
+                setIsOpen(false);
+              }}
+            >
+              {month}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default App;
