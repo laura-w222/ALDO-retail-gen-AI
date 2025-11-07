@@ -1128,4 +1128,220 @@ e Carousel Styles */
 .item-reason strong {
   color: #8b7355;
   font-weight: 600;
+}/* Box
+ Animation Styles */
+.box-animation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.box-animation-container {
+  position: relative;
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 600px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.close-animation-btn {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  z-index: 1001;
+}
+
+.close-animation-btn:hover {
+  color: #333;
+}
+
+.animation-frame {
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Simple Gift Box Styles */
+.gift-box-svg {
+  margin: 20px auto;
+  display: block;
+}
+
+.opening-lid {
+  animation: simpleLidOpen 0.8s ease-in-out;
+}
+
+@keyframes simpleLidOpen {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-15deg); }
+}
+
+/* Aesthetic Effects */
+.aesthetic-effects .effect {
+  animation: aestheticFloat 3s ease-in-out infinite;
+  opacity: 0.8;
+}
+
+.effect-1 { animation-delay: 0s; }
+.effect-2 { animation-delay: 0.4s; }
+.effect-3 { animation-delay: 0.8s; }
+.effect-4 { animation-delay: 1.2s; }
+.effect-5 { animation-delay: 1.6s; }
+.effect-6 { animation-delay: 2s; }
+
+@keyframes aestheticFloat {
+  0%, 100% { 
+    transform: translateY(0px) scale(1) rotate(0deg); 
+    opacity: 0.6; 
+  }
+  33% { 
+    transform: translateY(-15px) scale(1.1) rotate(5deg); 
+    opacity: 0.9; 
+  }
+  66% { 
+    transform: translateY(-8px) scale(0.95) rotate(-3deg); 
+    opacity: 0.7; 
+  }
+}
+
+/* Sliding Card Animations */
+.sliding-cards {
+  animation: cardsReveal 0.5s ease-out 0.3s both;
+}
+
+.reference-card-slide {
+  animation: slideFromCenter 0.6s ease-out 0.5s both;
+}
+
+.item-card-slide {
+  animation: slideFromCenter 0.6s ease-out both;
+}
+
+.slide-1 { animation-delay: 0.7s; }
+.slide-2 { animation-delay: 0.9s; }
+.slide-3 { animation-delay: 1.1s; }
+.slide-4 { animation-delay: 1.3s; }
+
+@keyframes slideFromCenter {
+  0% { 
+    transform: translate(0, 20px) scale(0.3); 
+    opacity: 0; 
+  }
+  50% { 
+    transform: translate(0, -5px) scale(1.05); 
+    opacity: 0.8; 
+  }
+  100% { 
+    transform: translate(0, 0) scale(1); 
+    opacity: 1; 
+  }
+}
+
+@keyframes cardsReveal {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Bundle Summary */
+.bundle-summary {
+  margin-top: 30px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 10px;
+}
+
+.bundle-summary h3 {
+  color: #8b7355;
+  margin-bottom: 15px;
+}
+
+.bundle-summary p {
+  margin: 8px 0;
+  color: #333;
+}
+
+.final-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.purchase-btn, .share-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 25px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.purchase-btn {
+  background: #8b7355;
+  color: white;
+}
+
+.purchase-btn:hover {
+  background: #6d5a42;
+  transform: translateY(-2px);
+}
+
+.share-btn {
+  background: white;
+  color: #8b7355;
+  border: 2px solid #8b7355;
+}
+
+.share-btn:hover {
+  background: #8b7355;
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* Select Bundle Button */
+.bundle-actions {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.select-bundle-btn {
+  background: #8b7355;
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(139, 115, 85, 0.3);
+}
+
+.select-bundle-btn:hover {
+  background: #6d5a42;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(139, 115, 85, 0.4);
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
