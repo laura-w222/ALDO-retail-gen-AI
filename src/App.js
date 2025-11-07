@@ -711,128 +711,62 @@ function BoxAnimation({ bundle, animationFrame, outfitImages, onClose }) {
         {/* Frame 1: Closed Box */}
         {animationFrame === 1 && (
           <div className="animation-frame frame-1">
-            <svg width="300" height="300" viewBox="0 0 300 300" className="gift-box-svg">
-              {/* Gift Box Body */}
-              <rect x="75" y="120" width="150" height="120" fill="#FFEF63" stroke="#333" strokeWidth="2" rx="8"/>
-              
-              {/* Gift Box Lid */}
-              <rect x="75" y="100" width="150" height="40" fill="#FFEF63" stroke="#333" strokeWidth="2" rx="8"/>
-              
-              {/* Horizontal Ribbon */}
-              <rect x="75" y="140" width="150" height="15" fill="white" stroke="#333" strokeWidth="1"/>
-              
-              {/* Vertical Ribbon */}
-              <rect x="142.5" y="100" width="15" height="140" fill="white" stroke="#333" strokeWidth="1"/>
-              
-              {/* Simple Bow */}
-              <ellipse cx="135" cy="110" rx="12" ry="8" fill="white" stroke="#333" strokeWidth="1"/>
-              <ellipse cx="165" cy="110" rx="12" ry="8" fill="white" stroke="#333" strokeWidth="1"/>
-              <circle cx="150" cy="110" r="5" fill="white" stroke="#333" strokeWidth="1"/>
-            </svg>
+            <div className="svg-frame-container">
+              <img src="/frame1.svg" alt="Closed Gift Box" className="frame-svg" />
+            </div>
             <h3>Preparing your perfect gift bundle...</h3>
           </div>
         )}
 
-        {/* Frame 2: Opening Box with Aesthetic Effects */}
+        {/* Frame 2: Opening Box with Effects */}
         {animationFrame === 2 && (
           <div className="animation-frame frame-2">
-            <svg width="300" height="300" viewBox="0 0 300 300" className="gift-box-svg">
-              {/* Gift Box Body */}
-              <rect x="75" y="120" width="150" height="120" fill="#FFEF63" stroke="#333" strokeWidth="2" rx="8"/>
+            <div className="svg-frame-container">
+              <img src="/frame2.svg" alt="Opening Gift Box" className="frame-svg" />
               
-              {/* Gift Box Lid (Opening) */}
-              <g className="opening-lid">
-                <rect x="75" y="70" width="150" height="40" fill="#FFEF63" stroke="#333" strokeWidth="2" rx="8" transform="rotate(-15 150 110)"/>
-              </g>
-              
-              {/* Horizontal Ribbon */}
-              <rect x="75" y="140" width="150" height="15" fill="white" stroke="#333" strokeWidth="1"/>
-              
-              {/* Vertical Ribbon */}
-              <rect x="142.5" y="100" width="15" height="140" fill="white" stroke="#333" strokeWidth="1"/>
-              
-              {/* Aesthetic Effects */}
-              <g className="aesthetic-effects">
-                <text x="120" y="80" fontSize="16" className="effect effect-1">˚.・</text>
-                <text x="180" y="90" fontSize="14" className="effect effect-2">⊹ ࣪ ˖</text>
-                <text x="150" y="60" fontSize="18" className="effect effect-3">☆⋆｡𖦹°‧★</text>
-                <text x="100" y="100" fontSize="15" className="effect effect-4">˙⋆✮</text>
-                <text x="200" y="85" fontSize="16" className="effect effect-5">⋆˚⟡˖ ࣪</text>
-                <text x="130" y="50" fontSize="14" className="effect effect-6">˚.・</text>
-              </g>
-            </svg>
+              {/* Aesthetic Effects overlaid on the SVG */}
+              <div className="aesthetic-effects-overlay">
+                <span className="effect effect-1">˚.・</span>
+                <span className="effect effect-2">⊹ ࣪ ˖</span>
+                <span className="effect effect-3">☆⋆｡𖦹°‧★</span>
+                <span className="effect effect-4">˙⋆✮</span>
+                <span className="effect effect-5">⋆˚⟡˖ ࣪</span>
+                <span className="effect effect-6">˚.・</span>
+              </div>
+            </div>
             <h3>Opening your gift bundle...</h3>
           </div>
         )}
 
-        {/* Frame 3: Cards Sliding Out */}
+        {/* Frame 3: Cards sliding up behind frame 2 */}
         {animationFrame === 3 && (
           <div className="animation-frame frame-3">
-            <svg width="300" height="300" viewBox="0 0 300 300" className="gift-box-svg">
-              {/* Gift Box Body */}
-              <rect x="75" y="120" width="150" height="120" fill="#FFEF63" stroke="#333" strokeWidth="2" rx="8"/>
-              
-              {/* Gift Box Lid (Fully Open) */}
-              <rect x="75" y="40" width="150" height="40" fill="#FFEF63" stroke="#333" strokeWidth="2" rx="8" transform="rotate(-30 150 80)"/>
-              
-              {/* Cards sliding out but staying in box */}
-              <g className="sliding-cards">
+            <div className="svg-frame-container">
+              {/* Cards sliding up behind the box */}
+              <div className="cards-sliding-container">
                 {/* Reference Card */}
                 {outfitImages.length > 0 && (
-                  <g className="reference-card-slide">
-                    <rect x="85" y="130" width="45" height="60" fill="white" stroke="#333" strokeWidth="1.5" rx="4"/>
-                    <foreignObject x="88" y="133" width="39" height="39">
-                      <img src={outfitImages[0].preview} alt="Style Reference" style={{width: '39px', height: '39px', objectFit: 'cover', borderRadius: '2px'}} />
-                    </foreignObject>
-                    <text x="107.5" y="185" textAnchor="middle" fontSize="7" fill="#333">Reference</text>
-                  </g>
+                  <div className="gift-card reference-card sliding-card">
+                    <img src={outfitImages[0].preview} alt="Style Reference" />
+                    <div className="card-label">Reference</div>
+                  </div>
                 )}
                 
                 {/* Bundle Item Cards */}
-                {bundle.items && bundle.items.map((item, index) => {
-                  const xPositions = [135, 170, 100, 205]; // Spread them out
-                  const yPositions = [125, 135, 145, 130];
-                  
-                  return (
-                    <g key={index} className={`item-card-slide slide-${index + 1}`}>
-                      <rect 
-                        x={xPositions[index] || 135} 
-                        y={yPositions[index] || 130} 
-                        width="45" 
-                        height="60" 
-                        fill="white" 
-                        stroke="#333" 
-                        strokeWidth="1.5" 
-                        rx="4"
-                      />
-                      {item.image_url && (
-                        <foreignObject 
-                          x={(xPositions[index] || 135) + 3} 
-                          y={(yPositions[index] || 130) + 3} 
-                          width="39" 
-                          height="39"
-                        >
-                          <img 
-                            src={item.image_url} 
-                            alt={item.product_name} 
-                            style={{width: '39px', height: '39px', objectFit: 'cover', borderRadius: '2px'}} 
-                          />
-                        </foreignObject>
-                      )}
-                      <text 
-                        x={(xPositions[index] || 135) + 22.5} 
-                        y={(yPositions[index] || 130) + 55} 
-                        textAnchor="middle" 
-                        fontSize="7" 
-                        fill="#333"
-                      >
-                        ${item.price}
-                      </text>
-                    </g>
-                  );
-                })}
-              </g>
-            </svg>
+                {bundle.items && bundle.items.map((item, index) => (
+                  <div key={index} className={`gift-card item-card sliding-card card-${index + 1}`}>
+                    {item.image_url && (
+                      <img src={item.image_url} alt={item.product_name} />
+                    )}
+                    <div className="card-label">{item.product_name}</div>
+                    <div className="card-price">${item.price}</div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Keep using frame2.svg for the opened box */}
+              <img src="/frame2.svg" alt="Opened Gift Box" className="frame-svg frame-svg-overlay" />
+            </div>
             
             <div className="bundle-summary">
               <h3>🎉 Your Perfect Gift Bundle!</h3>
